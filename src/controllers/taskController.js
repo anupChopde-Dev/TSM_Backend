@@ -1,56 +1,89 @@
-const tasks = [];
+import TaskList from '../models/taskList.js';
 
-export const getTasks = (req, res) => {
-  res.json(tasks);
-};
-
-export const createTask = (req, res) => {
-  const { title, description, status } = req.body;
-  const newTask = {
-    id: tasks.length + 1,
-    title,
-    description,
-    status: status || 'pending',
-    createdAt: new Date().toISOString(),
-  };
-
-  tasks.push(newTask);
-  res.status(201).json(newTask);
-};
-
-export const getTaskById = (req, res) => {
-  const task = tasks.find((task) => task.id === Number(req.params.id));
-
-  if (!task) {
-    return res.status(404).json({ message: 'Task not found' });
+export const getTasks = async (req, res) => {
+  try {
+    const tasks = await TaskList.find().sort({ createdAt: -1 }).lean();
+    res.json({ tasks });
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+    res.status(500).json({ message: 'Failed to fetch tasks' });
   }
-
-  res.json(task);
 };
 
-export const updateTask = (req, res) => {
-  const task = tasks.find((task) => task.id === Number(req.params.id));
+export const createTask = async (req, res) => {
+  try {
+    const { taskName, description, sp, priority, docs } = req.body;
 
-  if (!task) {
-    return res.status(404).json({ message: 'Task not found' });
+    if (!taskName || sp === undefined || priority === undefined) {
+      return res.status(400).json({
+        message: 'taskName, sp, and priority are required',
+      });
+    }
+
+    const newTask = await TaskList.create({
+      taskName,
+      description,
+      sp,
+      priority,
+      docs: Array.isArray(docs) ? docs : [],
+    });
+
+    res.status(201).json(newTask);
+  } catch (error) {
+    console.error('Error creating task:', error);
+    res.status(500).json({ message: 'Failed to create task' });
   }
-
-  const { title, description, status } = req.body;
-  task.title = title ?? task.title;
-  task.description = description ?? task.description;
-  task.status = status ?? task.status;
-  task.updatedAt = new Date().toISOString();
-
-  res.json(task);
 };
 
-export const deleteTask = (req, res) => {
-  const index = tasks.findIndex((task) => task.id === Number(req.params.id));
+export const getTaskById = async (req, res) => {
+  try {
+    const task = await TaskList.findById(req.params.id).lean();
 
-  if (index === -1) {
-    return res.status(404).json({ message: 'Task not found' });
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    res.json(task);
+  } catch (error) {
+    console.error('Error fetching task:', error);
+    res.status(500).json({ message: 'Failed to fetch task' });
   }
+};
 
-  tasks.splice(index, 1);
-  res.json({ message: 'Task deleted' });
+export const updateTask = async (req, res) => {
+  try {
+    const { taskName, description, sp, priority, docs } = req.body;
+
+    const task = await TaskList.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (taskName !== undefined) task.taskName = taskName;
+    if (description !== undefined) task.description = description;
+    if (sp !== undefined) task.sp = sp;
+    if (priority !== undefined) task.priority = priority;
+    if (docs !== undefined) task.docs = Array.isArray(docs) ? docs : task.docs;
+
+    await task.save();
+
+    res.json(task);
+  } catch (error) {
+    console.error('Error updating task:', error);
+    res.status(500).json({ message: 'Failed to update task' });
+  }
+};
+
+export const deleteTask = async (req, res) => {
+  try {
+    const task = await TaskList.findByIdAndDelete(req.params.id);
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    res.json({ message: 'Task deleted' });
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    res.status(500).json({ message: 'Failed to delete task' });
+  }
 };
