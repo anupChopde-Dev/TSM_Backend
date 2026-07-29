@@ -1,6 +1,8 @@
 import express from 'express';
 import {
   getProjects,
+  getProjectsByUser,
+  getProjectOptionsByUser,
   createProject,
   getProjectById,
   updateProject,
@@ -10,6 +12,8 @@ import {
 const router = express.Router();
 
 router.get('/', getProjects);
+router.get('/user/:userId/options', getProjectOptionsByUser);
+router.get('/user/:userId', getProjectsByUser);
 router.post('/', createProject);
 router.get('/:id', getProjectById);
 router.put('/:id', updateProject);

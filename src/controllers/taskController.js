@@ -1,4 +1,5 @@
 import TaskList from '../models/taskList.js';
+import ProjectList from '../models/projectList.js';
 
 export const getTasks = async (req, res) => {
   try {
@@ -47,6 +48,45 @@ export const getTaskById = async (req, res) => {
   } catch (error) {
     console.error('Error fetching task:', error);
     res.status(500).json({ message: 'Failed to fetch task' });
+  }
+};
+
+export const getTasksByProjectAndUser = async (req, res) => {
+  try {
+    const { projectId, userId } = req.params;
+
+    if (!projectId || !userId) {
+      return res.status(400).json({ message: 'projectId and userId are required' });
+    }
+
+    const project = await ProjectList.findById(projectId)
+      .populate('selectedTaskIds')
+      .lean();
+
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    const isUserInProject = project.users.some(id => id.toString() === userId);
+    if (!isUserInProject) {
+      return res.status(403).json({ message: 'User is not assigned to this project' });
+    }
+
+    const tasks = (project.selectedTaskIds || []).map(task => ({
+      id: task._id,
+      taskName: task.taskName,
+      description: task.description,
+      sp: task.sp,
+      priority: task.priority,
+      docs: task.docs,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
+    }));
+
+    res.json({ projectId, userId, tasks });
+  } catch (error) {
+    console.error('Error fetching tasks by project and user:', error);
+    res.status(500).json({ message: 'Failed to fetch tasks for project and user' });
   }
 };
 
