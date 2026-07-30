@@ -81,9 +81,12 @@ export const getTasksByProjectAndUser = async (req, res) => {
       docs: task.docs,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
+      status:task.status,
+      projectId, 
+      userId,
     }));
 
-    res.json({ projectId, userId, tasks });
+    res.json({  tasks });
   } catch (error) {
     console.error('Error fetching tasks by project and user:', error);
     res.status(500).json({ message: 'Failed to fetch tasks for project and user' });
@@ -127,3 +130,21 @@ export const deleteTask = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete task' });
   }
 };
+
+
+export const updateTaskStatus = async (req, res) => {
+  try {
+
+    const { status } = req.body;
+    console.log('Received status:', status);
+    const task = await TaskList.findById(req.params.id)
+    console.log('Found task:', task);
+    if (!task) return res.status(404).json({ message: 'Task not found' })
+    task.status = status;
+    await task.save();
+    res.status(200).json({ message: 'Task status updated successfully', task });
+  } catch (error) {
+    console.error('Error updating task status:', error);
+    res.status(500).json({ message: 'Failed to update task status' });
+  }
+}

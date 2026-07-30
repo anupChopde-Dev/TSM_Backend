@@ -1,4 +1,5 @@
 import ProjectList from '../models/projectList.js';
+import { formatDateToDDMMYYYY } from '../utils/common.js';
 
 export const getProjects = async (req, res) => {
   try {
@@ -60,14 +61,14 @@ export const getProjectOptionsByUser = async (req, res) => {
     }
 
     const projects = await ProjectList.find({ users: userId })
-      .select('projectName')
+      .select('projectName startDate endDate')
       .sort({ createdAt: -1 })
       .lean();
 
     const projectOptions = projects.map(project => ({
       id: project._id,
       projectName: project.projectName,
-      projectDue: `${project.startDate}-${project.endDate}`,
+      projectDue: `${formatDateToDDMMYYYY(project.startDate)}-${formatDateToDDMMYYYY(project.endDate)}`,
     }));
 
     res.json({ projects: projectOptions });
