@@ -1,4 +1,5 @@
 import ProjectList from '../models/projectList.js';
+import { formatDateToDDMMYYYY } from '../utils/common.js';
 
 export const getProjects = async (req, res) => {
   try {
@@ -7,7 +8,7 @@ export const getProjects = async (req, res) => {
       .populate('selectedTaskIds', 'taskName priority sp')
       .sort({ createdAt: -1 })
       .lean();
-const projectsWithCount = projects.map(project => ({
+    const projectsWithCount = projects.map(project => ({
       ...project,
       taskCount: project.selectedTaskIds ? project.selectedTaskIds.length : 0
     }));
@@ -15,6 +16,65 @@ const projectsWithCount = projects.map(project => ({
   } catch (error) {
     console.error('Error fetching projects:', error);
     res.status(500).json({ message: 'Failed to fetch projects' });
+  }
+};
+
+export const getProjectsByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'userId is required' });
+    }
+
+    const projects = await ProjectList.find({ users: userId })
+      .select('projectName startDate endDate users selectedTaskIds createdAt updatedAt')
+      .populate('users', 'username email role')
+      .populate('selectedTaskIds', 'taskName priority sp')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const responseProjects = projects.map(project => ({
+      id: project._id,
+      projectName: project.projectName,
+      startDate: project.startDate,
+      endDate: project.endDate,
+      users: project.users,
+      taskCount: project.selectedTaskIds ? project.selectedTaskIds.length : 0,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+    }));
+
+    res.json({ projects: responseProjects });
+  } catch (error) {
+    console.error('Error fetching projects for user:', error);
+    res.status(500).json({ message: 'Failed to fetch projects for user' });
+  }
+};
+
+export const getProjectOptionsByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'userId is required' });
+    }
+
+    const projects = await ProjectList.find({ users: userId })
+      .select('projectName startDate endDate')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const projectOptions = projects.map(project => ({
+      id: project._id,
+      projectName: project.projectName,
+      projectDue: `${formatDateToDDMMYYYY(project.startDate)}-${formatDateToDDMMYYYY(project.endDate)}`,
+    }));
+
+    res.json({ projects: projectOptions });
+  } catch (error) {
+    console.error('Error fetching project options for user:', error);
+    res.status(500).json({ message: 'Failed to fetch project options for user' });
   }
 };
 

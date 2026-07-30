@@ -35,6 +35,7 @@ export const signup = async (req, res) => {
   const newUser = await User.create({
     username,
     email,
+    isBlock: false,
     password: hashedPassword,
     role,
   });
@@ -70,6 +71,9 @@ export const login = async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) {
     return res.status(401).json({ message: 'Invalid credentials' });
+  }
+  if(user.isBlock){
+    return res.status(403).json({ message: 'User is blocked. Please contact the administrator.' });
   }
 
   const passwordMatch = await bcrypt.compare(password, user.password);

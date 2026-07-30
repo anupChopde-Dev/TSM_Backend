@@ -24,6 +24,10 @@ const taskListSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
+  status: {
+  type: String,
+  default: "todo",
+}
 }, {
   timestamps: true,
 });
