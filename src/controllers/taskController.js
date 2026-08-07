@@ -96,7 +96,6 @@ export const getTasksByProjectAndUser = async (req, res) => {
 export const updateTask = async (req, res) => {
   try {
     const { taskName, description, sp, priority, docs } = req.body;
-
     const task = await TaskList.findById(req.params.id);
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
@@ -136,9 +135,7 @@ export const updateTaskStatus = async (req, res) => {
   try {
 
     const { status } = req.body;
-    console.log('Received status:', status);
     const task = await TaskList.findById(req.params.id)
-    console.log('Found task:', task);
     if (!task) return res.status(404).json({ message: 'Task not found' })
     task.status = status;
     await task.save();
