@@ -39,7 +39,6 @@ const seedAdmin = async () => {
       role: adminData.role,
     });
 
-    console.log('Admin user created:', admin.email);
     process.exit(0);
   } catch (error) {
     console.error('Failed to seed admin user:', error.message);

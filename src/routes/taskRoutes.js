@@ -15,8 +15,8 @@ router.get('/', getTasks);
 router.post('/', createTask);
 router.get('/project/:projectId/user/:userId', getTasksByProjectAndUser);
 router.get('/:id', getTaskById);
-router.put('/:id', updateTask);
-router.delete('/:id', deleteTask);
+router.put('/update/:id', updateTask);
+router.delete('/delete/:id', deleteTask);
 router.put('/taskUpdate/:id', updateTaskStatus);
 
 export default router;
